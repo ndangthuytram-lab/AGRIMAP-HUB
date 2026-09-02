@@ -1,0 +1,19 @@
+ARCHITECTURE OVERVIEW:
+This is a web application designed for AI-powered supply chain, market intelligence and distribution platform . The project is hosted on Vercel using serverless functions for the Python backend.
+CONSTRAINTS & RULES FOR AI GENERATION:
+1. Backend: The entire backend logic MUST be centralized in a single Python file (`api/index.py`). We are using Flask as the framework.
+2. Frontend: We are using a multi-page architecture. Each distinct view  MUST have its own dedicated HTML file located inside the `templates/` directory.
+3. Hosting: The project uses Vercel. Do not alter `vercel.json` without explicit instruction.
+4. APIs: The project relies on free-tier market data APIs. Ensure all data fetching happens strictly in the single backend file and is passed to the frontend templates.
+DIRECTORY STRUCTURE(At the beginning for future reference):
+/
+├── api/
+│   └── index.py            # Single monolithic backend file (Flask)
+├── templates/
+│   ├── index.html          # Landing page
+│   └── dashboard.html      # Main dashboard (currently in development)
+├── .gitignore
+├── .env
+├── requirements.txt
+├── structure.txt           # This file
+└── vercel.json             # Vercel deployment configuration

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Market Benchmark - CoreLogic AI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #333; }
+        header { background: #10b981; color: #fff; padding: 2rem 1rem; text-align: center; }
+        header h1 { margin: 0; font-size: 2rem; }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        
+        .card { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: #475569; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+        
+        .btn { display: inline-block; width: 100%; background: #10b981; color: #fff; padding: 12px 24px; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: background 0.3s ease; text-align: center; }
+        .btn:hover { background: #059669; }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .result-box { display: none; margin-top: 1.5rem; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 6px; background: #f8fafc; }
+        .result-box.active { display: block; }
+        
+        .alert-box { padding: 1rem; border-radius: 6px; font-weight: bold; margin-bottom: 1rem; text-align: center; }
+        .alert-good { background: #d1fae5; color: #065f46; border: 1px solid #34d399; }
+        
+        .big-number { font-size: 2.5rem; font-weight: bold; color: #3b82f6; text-align: center; margin: 0.5rem 0; }
+        .metric-label { font-size: 0.9rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-top: 1rem; }
+        .metric-value { margin-top: 0.25rem; font-size: 1rem; color: #0f172a; }
+        
+        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .nav-back { display: block; text-align: center; margin-top: 2rem; color: #64748b; text-decoration: none; font-weight: bold; }
+        
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Global Market Benchmark</h1>
+        <p style="margin: 0.5rem 0 0; font-size: 0.85rem; opacity: 0.9;">Real global egg price benchmark from USDA NASS, converted at the live USD/VND rate. This is not local competitor pricing.</p>
+    </header>
+
+    <div class="container">
+        <!-- Input Parameters Card -->
+        <div class="card">
+            <h2>Product Parameters</h2>
+            <div class="form-group">
+                <label for="product">Target Product</label>
+                <input type="text" id="product" value="Clean Indigenous Chicken Eggs" placeholder="e.g., Clean Indigenous Chicken Eggs">
+            </div>
+            <div class="form-group">
+                <label for="my_price">Your Current Price (VND per Dozen)</label>
+                <input type="number" id="my_price" value="30000" placeholder="e.g., 30000">
+            </div>
+            <button id="trackBtn" class="btn" onclick="runTracker()">Compare to Global Benchmark</button>
+            <div id="loading" class="loader" style="margin-top: 15px;"></div>
+        </div>
+        
+        <!-- Results Card -->
+        <div class="card">
+            <h2>Global Market Benchmark</h2>
+
+            <div id="errorBox" style="display: none; color: #ef4444; font-weight: bold; margin-top: 1rem;"></div>
+
+            <div id="resultBox" class="result-box">
+                <div id="statusAlert" class="alert-box alert-good">...</div>
+
+                <div class="metric-label" style="text-align: center;">Real Global Benchmark (VND/Dozen)</div>
+                <div class="big-number" id="resAverage">0</div>
+                <div style="text-align: center; font-size: 0.8rem; color: #64748b;" id="resSource">...</div>
+
+                <div class="metric-label" style="text-align: center;">Your Price (VND/Dozen)</div>
+                <div style="text-align: center; font-size: 1.6rem; font-weight: bold; color: #0f172a;" id="resYourPrice">0</div>
+
+                <div class="metric-label">AI Actionable Insight</div>
+                <div class="metric-value" style="font-style: italic; background: #fff; padding: 1rem; border-left: 4px solid #10b981; margin-top: 0.5rem;" id="resInsight">...</div>
+            </div>
+            
+            <div id="emptyState" style="text-align: center; color: #94a3b8; margin-top: 3rem;">
+                Enter your product details and click "Compare to Global Benchmark" to pull the live USDA benchmark price, converted at today's USD/VND rate.
+            </div>
+        </div>
+    </div>
+    
+    <a href="/" class="nav-back">← Back to Main Menu</a>
+
+    <script>
+        async function runTracker() {
+            const btn = document.getElementById('trackBtn');
+            const loader = document.getElementById('loading');
+            const resultBox = document.getElementById('resultBox');
+            const errorBox = document.getElementById('errorBox');
+            const emptyState = document.getElementById('emptyState');
+
+            // Gather input
+            const payload = {
+                product: document.getElementById('product').value,
+                my_price: parseInt(document.getElementById('my_price').value)
+            };
+
+            // UI State adjustments
+            btn.disabled = true;
+            loader.style.display = 'block';
+            resultBox.classList.remove('active');
+            errorBox.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/track_prices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server processing failed.');
+                }
+
+                // Populate Analytics
+                document.getElementById('resAverage').innerText = data.benchmark.price_vnd_per_dozen.toLocaleString();
+                document.getElementById('resSource').innerText =
+                    `Source: ${data.benchmark.source} (${data.benchmark.source_year}), live FX rate ${data.benchmark.fx_rate_usd_vnd.toLocaleString()} VND/USD`;
+                document.getElementById('resYourPrice').innerText =
+                    Number(data.your_price_vnd_per_dozen).toLocaleString();
+                document.getElementById('statusAlert').innerText = `Status: ${data.analysis.competitive_status}`;
+                document.getElementById('resInsight').innerText = data.analysis.actionable_insight;
+
+                resultBox.classList.add('active');
+            } catch (err) {
+                errorBox.innerText = `System Error: ${err.message}`;
+                errorBox.style.display = 'block';
+                emptyState.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Route Optimizer - CoreLogic AI</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #333; }
+        header { background: #1e293b; color: #fff; padding: 2rem 1rem; text-align: center; }
+        header h1 { margin: 0; font-size: 2rem; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
+        
+        .card { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: #475569; }
+        input[type="text"], input[type="time"] { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+        
+        .btn { display: inline-block; width: 100%; background: #f59e0b; color: #fff; padding: 12px 24px; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: background 0.3s ease; text-align: center; font-size: 1rem; }
+        .btn:hover { background: #d97706; }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #f59e0b; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 15px auto 0; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #map { height: 500px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 1;}
+        
+        .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .metric-card { background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0; text-align: center; }
+        .metric-val { font-size: 1.5rem; font-weight: bold; color: #0f172a; }
+        .metric-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold; }
+        
+        .sequence-list { list-style: none; padding: 0; margin: 0; }
+        .sequence-list li { background: #fff; border: 1px solid #e2e8f0; padding: 1rem; margin-bottom: 0.5rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6;}
+        .seq-num { font-weight: bold; color: #3b82f6; margin-right: 1rem; font-size: 1.2rem;}
+        .status-badge { background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Smart Route & Logistics Optimizer</h1>
+        <p style="margin: 0.5rem 0 0; font-size: 0.85rem; opacity: 0.8;">Real routing via OpenStreetMap (Nominatim) + OpenRouteService. You enter real delivery addresses; distances and times come from the live road network.</p>
+    </header>
+
+    <div class="container">
+        <!-- Input Controls -->
+        <div class="card">
+            <h2>Dispatch Parameters</h2>
+            <div class="form-group">
+                <label>Dispatch Time</label>
+                <input type="time" id="dispatch_time" value="05:30">
+            </div>
+
+            <div id="stopsContainer"></div>
+            <button type="button" id="addStopBtn" class="btn" style="background:#64748b; margin-bottom: 1.5rem;" onclick="addStop()">+ Add Delivery Stop</button>
+
+            <button id="optimizeBtn" class="btn" onclick="calculateRoute()">Generate Smart Trajectory</button>
+            <div id="loading" class="loader"></div>
+            
+            <div id="errorBox" style="display: none; color: #ef4444; font-weight: bold; margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Output Visualization -->
+        <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+            <div id="map"></div>
+            
+            <div id="resultsPanel" style="padding: 1.5rem; display: none; border-top: 1px solid #e2e8f0;">
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-val" id="resDistance">0 km</div>
+                        <div class="metric-label">Estimated Transit</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-val" id="resNodes">0</div>
+                        <div class="metric-label">Stops Optimized</div>
+                    </div>
+                </div>
+                
+                <p id="resStrategy" style="font-size: 0.95rem; color: #475569; margin-bottom: 1.5rem;"></p>
+                
+                <ul class="sequence-list" id="routeSequence">
+                    <!-- Javascript will populate this -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize Map
+        const map = L.map('map').setView([21.0285, 105.8542], 12);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        }).addTo(map);
+        
+        let routeLayer = L.featureGroup().addTo(map);
+
+        let stopCount = 0;
+
+        function addStop() {
+            if (stopCount >= 8) { alert('Maximum 8 delivery stops.'); return; }
+            stopCount++;
+            const div = document.createElement('div');
+            div.className = 'form-group stop-row';
+            div.dataset.stopId = stopCount;
+            div.innerHTML = `
+                <label>Stop ${stopCount} - Real Address</label>
+                <input type="text" class="stop-address" placeholder="e.g., BigC Thang Long, Hanoi">
+                <label style="margin-top:0.5rem;">Time Window</label>
+                <div style="display:flex; gap:0.5rem;">
+                    <input type="time" class="stop-start" value="06:00">
+                    <input type="time" class="stop-end" value="08:00">
+                </div>
+            `;
+            document.getElementById('stopsContainer').appendChild(div);
+        }
+        addStop();
+        addStop();
+
+        async function calculateRoute() {
+            const btn = document.getElementById('optimizeBtn');
+            const loader = document.getElementById('loading');
+            const resultsPanel = document.getElementById('resultsPanel');
+            const errorBox = document.getElementById('errorBox');
+
+            btn.disabled = true;
+            loader.style.display = 'block';
+            resultsPanel.style.display = 'none';
+            errorBox.style.display = 'none';
+            routeLayer.clearLayers();
+
+            const stopRows = document.querySelectorAll('.stop-row');
+            const deliveries = Array.from(stopRows).map((row, i) => ({
+                name: `Stop ${i + 1}`,
+                address: row.querySelector('.stop-address').value,
+                time_window: `${row.querySelector('.stop-start').value}-${row.querySelector('.stop-end').value}`
+            })).filter(d => d.address.trim() !== '');
+
+            if (deliveries.length === 0) {
+                errorBox.innerText = 'Enter at least one real delivery address.';
+                errorBox.style.display = 'block';
+                btn.disabled = false;
+                loader.style.display = 'none';
+                return;
+            }
+
+            const payload = {
+                dispatch_time: document.getElementById('dispatch_time').value,
+                depot: { name: "Central Warehouse", lat: 21.0285, lon: 105.8542 },
+                deliveries: deliveries
+            };
+
+            try {
+                const response = await fetch('/api/optimize_route', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const json = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(json.error || 'Optimization calculation failed.');
+                }
+
+                const data = json.data;
+                const route = data.optimized_route;
+
+                // Update UI Metrics
+                document.getElementById('resDistance').innerText = `${data.total_estimated_km} km`;
+                document.getElementById('resNodes').innerText = route.length;
+                document.getElementById('resStrategy').innerText = data.strategy_summary;
+
+                // Build Sequence List and Map Markers
+                const seqList = document.getElementById('routeSequence');
+                seqList.innerHTML = '';
+                
+                let latlngs = [];
+
+                route.forEach(node => {
+                    // List Item
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div>
+                            <span class="seq-num">#${node.step}</span>
+                            <strong>${node.name}</strong> <br>
+                            <small style="color:#64748b; margin-left:2.5rem;">Est. Arrival: ${node.arrival_time}</small>
+                        </div>
+                        <span class="status-badge">${node.time_window_status}</span>
+                    `;
+                    seqList.appendChild(li);
+
+                    // Map Marker
+                    const latlng = [node.lat, node.lon];
+                    latlngs.push(latlng);
+                    
+                    const isDepot = node.name.includes("Warehouse") || node.name.includes("Depot");
+                    const markerColor = isDepot ? 'red' : 'blue';
+                    
+                    const marker = L.circleMarker(latlng, {
+                        radius: 8,
+                        fillColor: markerColor,
+                        color: "#fff",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    });
+                    marker.bindPopup(`<b>${node.step}. ${node.name}</b><br>Arrival: ${node.arrival_time}`);
+                    routeLayer.addLayer(marker);
+                });
+
+                // Draw Path line
+                if (latlngs.length > 1) {
+                    const polyline = L.polyline(latlngs, {color: '#3b82f6', weight: 4, dashArray: '10, 10'}).addTo(routeLayer);
+                    map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+                }
+
+                resultsPanel.style.display = 'block';
+
+            } catch (err) {
+                errorBox.innerText = `System Error: ${err.message}`;
+                errorBox.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

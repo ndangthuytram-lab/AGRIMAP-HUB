@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AI Demand & Inventory Predictor</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #333; }
+        header { background: #1e293b; color: #fff; padding: 2rem 1rem; text-align: center; }
+        header h1 { margin: 0; font-size: 2rem; }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        
+        .card { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: #475569; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+        
+        .btn { display: inline-block; width: 100%; background: #3b82f6; color: #fff; padding: 12px 24px; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: background 0.3s ease; text-align: center; }
+        .btn:hover { background: #2563eb; }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .result-box { display: none; margin-top: 1.5rem; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 6px; background: #f8fafc; }
+        .result-box.active { display: block; }
+        .big-number { font-size: 3rem; font-weight: bold; color: #10b981; text-align: center; margin: 1rem 0; }
+        .metric-label { font-size: 0.9rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-top: 1rem; }
+        .metric-value { margin-top: 0.25rem; font-size: 1rem; color: #0f172a; }
+
+        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AI Demand & Inventory Predictor</h1>
+    </header>
+
+    <div class="container">
+        <!-- Input Parameters Card -->
+        <div class="card">
+            <h2>Production Parameters</h2>
+            <div class="form-group">
+                <label for="product">Target Product</label>
+                <input type="text" id="product" value="Egg Cartons" placeholder="e.g., Egg Cartons">
+            </div>
+            <div class="form-group">
+                <label for="baseline">Baseline Daily Demand (Units)</label>
+                <input type="number" id="baseline" value="1000" placeholder="e.g., 1000">
+            </div>
+            <div class="form-group">
+                <label for="events">Upcoming Events / Seasonality</label>
+                <input type="text" id="events" value="Heavy rain incoming, local school farm visit cancelled." placeholder="e.g., Back-to-school season">
+            </div>
+            <button id="predictBtn" class="btn" onclick="runPrediction()">Generate Forecast</button>
+            <div id="loading" class="loader" style="margin-top: 15px;"></div>
+        </div>
+
+        
+        <div class="card">
+            <h2>Prediction Analytics</h2>
+            
+            <div id="errorBox" style="display: none; color: #ef4444; font-weight: bold; margin-top: 1rem;"></div>
+
+            <div id="resultBox" class="result-box">
+                <div class="metric-label" style="text-align: center;">Target Production Volume</div>
+                <div class="big-number" id="resTarget">0</div>
+                
+                <div class="metric-label">Weather Impact Assessment</div>
+                <div class="metric-value" id="resWeather">...</div>
+                
+                <div class="metric-label">Event & Seasonality Adjustment</div>
+                <div class="metric-value" id="resEvent">...</div>
+
+                <div class="metric-label">Real Detected Holidays (Vietnam, next 14 days)</div>
+                <div class="metric-value" id="resHolidays">...</div>
+
+                <div class="metric-label">Core Strategy Reasoning</div>
+                <div class="metric-value" id="resReasoning">...</div>
+            </div>
+            
+            <div id="emptyState" style="text-align: center; color: #94a3b8; margin-top: 3rem;">
+                Enter parameters and click "Generate Forecast" to pull live intelligence.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runPrediction() {
+            const btn = document.getElementById('predictBtn');
+            const loader = document.getElementById('loading');
+            const resultBox = document.getElementById('resultBox');
+            const errorBox = document.getElementById('errorBox');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Gather input
+            const payload = {
+                product: document.getElementById('product').value,
+                baseline: parseInt(document.getElementById('baseline').value),
+                events: document.getElementById('events').value
+            };
+
+            // UI State adjustments
+            btn.disabled = true;
+            loader.style.display = 'block';
+            resultBox.classList.remove('active');
+            errorBox.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/predict_demand', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server processing failed.');
+                }
+
+                // Populate Analytics
+                document.getElementById('resTarget').innerText = data.recommended_production;
+                document.getElementById('resWeather').innerText = data.weather_impact;
+                document.getElementById('resEvent').innerText = data.event_impact;
+                document.getElementById('resReasoning').innerText = data.reasoning;
+
+                // null/undefined means the holiday source was unreachable — we must NOT
+                // present that as a confirmed "no holidays" result.
+                let holidaysText;
+                if (data.detected_holidays === null || data.detected_holidays === undefined) {
+                    holidaysText = 'Holiday data temporarily unavailable';
+                } else if (data.detected_holidays.length) {
+                    holidaysText = data.detected_holidays.map(h => `${h.name} (${h.date})`).join(', ');
+                } else {
+                    holidaysText = 'None in the next 14 days';
+                }
+                document.getElementById('resHolidays').innerText = holidaysText;
+
+                resultBox.classList.add('active');
+            } catch (err) {
+                errorBox.innerText = `System Error: ${err.message}`;
+                errorBox.style.display = 'block';
+                emptyState.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
