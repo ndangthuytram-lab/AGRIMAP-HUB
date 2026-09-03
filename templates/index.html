@@ -1,51 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoreLogic AI</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; margin: 0; padding: 0; background: #f9fafb; color: #333; }
-        header { background: #1e293b; color: #fff; padding: 3rem 1rem; text-align: center; }
-        header h1 { margin: 0; font-size: 2.5rem; }
-        header p { font-size: 1.2rem; color: #cbd5e1; }
-        .container { max-width: 800px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h2 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-        ul { margin-top: 1rem; }
-        li { margin-bottom: 1rem; }
-        .btn-group { display: flex; justify-content: center; gap: 1rem; margin-top: 20px; flex-wrap: wrap; }
-        .btn { display: inline-block; background: #3b82f6; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; transition: background 0.3s ease; }
-        .btn-secondary { background: #10b981; }
-        .btn-tertiary { background: #8b5cf6; }
-        .btn-quaternary { background: #f59e0b; }
-        .btn:hover { background: #2563eb; filter: brightness(1.1); }
-        .center { text-align: center; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriMap AI Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* === Design Tokens === */
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-2: #1c2333;
+      --surface-3: #21262d;
+      --border: #30363d;
+      --green: #22c55e;
+      --green-dim: #16a34a;
+      --green-muted: rgba(34,197,94,0.08);
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --text-dim: #6e7681;
+      --yellow: #eab308;
+      --orange: #f97316;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --header-h: 52px;
+      --sidebar-w: 52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+    /* === App Header === */
+    .app-header {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+      background: rgba(13,17,23,0.97);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 16px; z-index: 100; gap: 0;
+      backdrop-filter: blur(8px);
+    }
+    .header-brand {
+      display: flex; align-items: center; gap: 8px; color: var(--text);
+      font-weight: 700; font-size: 13px; letter-spacing: 0.08em;
+      text-decoration: none; width: 200px; flex-shrink: 0;
+    }
+    .header-nav { flex: 1; display: flex; align-items: center; justify-content: center; gap: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 6px; padding: 6px 14px;
+      border-radius: 6px; color: var(--text-muted); text-decoration: none;
+      font-size: 13px; font-weight: 500; transition: color 0.15s, background 0.15s; white-space: nowrap;
+    }
+    .nav-item:hover { color: var(--text); background: var(--surface-3); }
+    .nav-item.active { color: var(--green); }
+    .header-utils { display: flex; align-items: center; gap: 6px; width: 200px; justify-content: flex-end; flex-shrink: 0; }
+    .icon-btn {
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); border-radius: 6px; background: transparent;
+      color: var(--text-muted); cursor: pointer; transition: color 0.15s, background 0.15s;
+    }
+    .icon-btn:hover { color: var(--text); background: var(--surface-3); }
+    .user-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green-dim), #065f46);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff; cursor: pointer; border: 1px solid var(--border);
+      letter-spacing: 0.05em;
+    }
+
+    /* === Sidebar === */
+    .app-sidebar {
+      position: fixed; top: var(--header-h); left: 0; bottom: 0; width: var(--sidebar-w);
+      background: var(--bg); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 90; padding: 8px 0;
+    }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 6px; }
+    .sidebar-bottom { display: flex; flex-direction: column; gap: 2px; padding: 0 6px 8px; }
+    .sidebar-item {
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; color: var(--text-dim); text-decoration: none;
+      transition: color 0.15s, background 0.15s;
+    }
+    .sidebar-item:hover { color: var(--text-muted); background: var(--surface-3); }
+    .sidebar-item.active { color: var(--green); background: var(--green-muted); }
+    .sidebar-sep { height: 1px; background: var(--border); margin: 4px 6px; }
+
+    /* === App Body === */
+    .app-body { margin-top: var(--header-h); margin-left: var(--sidebar-w); min-height: calc(100vh - var(--header-h)); }
+
+    /* === Landing Specific === */
+    .landing-hero { padding: 56px 48px 48px; max-width: 980px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--green-muted); border: 1px solid rgba(34,197,94,0.25);
+      color: var(--green); font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 20px; margin-bottom: 20px;
+    }
+    .hero-title { font-size: 34px; font-weight: 700; color: var(--text); line-height: 1.2; margin-bottom: 12px; }
+    .hero-title em { color: var(--green); font-style: normal; }
+    .hero-subtitle { font-size: 14px; color: var(--text-muted); max-width: 520px; margin-bottom: 44px; line-height: 1.7; }
+
+    .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 14px; }
+    .module-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 22px 20px; text-decoration: none; color: var(--text);
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+      display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden;
+    }
+    .module-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--card-accent, var(--green)); opacity: 0; transition: opacity 0.2s;
+    }
+    .module-card:hover { border-color: var(--card-accent, var(--green)); transform: translateY(-2px); background: var(--surface-2); }
+    .module-card:hover::before { opacity: 1; }
+    .module-icon {
+      width: 38px; height: 38px; border-radius: 8px;
+      background: var(--icon-bg, var(--green-muted));
+      border: 1px solid var(--icon-border, rgba(34,197,94,0.2));
+      display: flex; align-items: center; justify-content: center;
+      color: var(--card-accent, var(--green));
+    }
+    .module-title { font-size: 13px; font-weight: 600; }
+    .module-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; flex: 1; }
+    .module-cta { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--card-accent, var(--green)); }
+
+    .status-bar {
+      display: flex; gap: 0; margin-top: 44px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    }
+    .status-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 20px; flex: 1;
+      border-right: 1px solid var(--border);
+    }
+    .status-item:last-child { border-right: none; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.online { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .status-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+    .status-val { font-size: 12px; font-weight: 600; color: var(--text); margin-left: auto; }
+
+    @media (max-width: 900px) { .landing-hero { padding: 40px 24px; } .status-item { padding: 12px 14px; } }
+    @media (max-width: 768px) { .header-nav { display: none; } .modules-grid { grid-template-columns: 1fr 1fr; } .hero-title { font-size: 26px; } .status-bar { flex-wrap: wrap; } .status-item { min-width: 50%; border-bottom: 1px solid var(--border); } }
+    @media (max-width: 480px) { .modules-grid { grid-template-columns: 1fr; } .app-sidebar { display: none; } .app-body { margin-left: 0; } }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>CoreLogic AI</h1>
-        <p>Business Strategy & Expansion Engine</p>
-    </header>
-    
-    <div class="container">
-        <h2>Executive Summary</h2>
-        <p>CoreLogic AI is an advanced system designed to act as an automated Chief Marketing Officer (CMO) and Expansion Strategist. It empowers SMEs and family-owned businesses to scale beyond their immediate geographical boundaries using data-driven infrastructure.</p>
-        
-        <h2>Core Modules</h2>
-        <ul>
-            <li><strong>AI Demand & Inventory Predictor:</strong> Calculates inventory adjustments based on real-time weather and events to prevent overstocking and understocking.</li>
-            <li><strong>Global Market Benchmark:</strong> Compares your wholesale price against a real global commodity benchmark (USDA NASS egg prices, converted at the live USD/VND exchange rate), with strategic context on where you sit relative to it.</li>
-            <li><strong>Strategic Distributor Map:</strong> Queries real business locations from OpenStreetMap to find and score potential B2B wholesale buyers within a designated radius, empowering sales prioritization.</li>
-            <li><strong>Smart Route & Logistics Optimizer:</strong> Resolves Vehicle Routing Problems (VRP) using real geocoding and live road-network routing, sequencing deliveries to minimize distance while guaranteeing arrival within strict vendor time windows.</li>
-        </ul>
 
-        <div class="btn-group">
-            <a href="/dashboard" class="btn">Inventory Predictor</a>
-            <a href="/market-tracker" class="btn btn-secondary">Market Benchmark</a>
-            <a href="/distributor-map" class="btn btn-tertiary">Distributor Map</a>
-            <a href="/route-optimizer" class="btn btn-quaternary">Route Optimizer</a>
-        </div>
+<!-- ═══ APP HEADER ═══ -->
+<header class="app-header">
+  <a href="/" class="header-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3C8.5 6.5 5 11 5 15.5a7 7 0 0 0 14 0C19 11 15.5 6.5 12 3z" fill="#22c55e" opacity="0.85"/>
+      <path d="M12 12.5v7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M9.5 15.5c.8-1.2 2.5-2.8 2.5-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span>AGRIMAP AI HUB</span>
+  </a>
+
+  <nav class="header-nav" aria-label="Main navigation">
+    <a href="/dashboard" class="nav-item">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Demand
+    </a>
+    <a href="/market-tracker" class="nav-item">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Market
+    </a>
+    <a href="/distributor-map" class="nav-item">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Map
+    </a>
+    <a href="/route-optimizer" class="nav-item">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Logistics
+    </a>
+  </nav>
+
+  <div class="header-utils">
+    <button class="icon-btn" title="Notifications" aria-label="Notifications">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </button>
+    <button class="icon-btn" title="Settings" aria-label="Settings">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <div class="user-avatar" title="User profile">AG</div>
+  </div>
+</header>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="app-sidebar" aria-label="Module navigation">
+  <nav class="sidebar-nav">
+    <a href="/" class="sidebar-item active" title="Home">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <a href="/distributor-map" class="sidebar-item" title="Distributor Map">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    </a>
+    <a href="/dashboard" class="sidebar-item" title="Demand Analytics">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    </a>
+    <a href="/market-tracker" class="sidebar-item" title="Market Tracker">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    </a>
+    <a href="/route-optimizer" class="sidebar-item" title="Route Optimizer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+    </a>
+  </nav>
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-bottom">
+    <a href="#" class="sidebar-item" title="Help">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </a>
+  </div>
+</aside>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<main class="app-body">
+  <div class="landing-hero">
+    <div class="hero-badge">
+      <svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg>
+      AI-Powered Platform · Hanoi, Vietnam
     </div>
+    <h1 class="hero-title">Agricultural Intelligence<br><em>Command Center</em></h1>
+    <p class="hero-subtitle">AI-driven supply chain analytics, GIS market intelligence, and smart logistics optimization — built for modern agri-businesses operating at scale.</p>
+
+    <div class="modules-grid">
+      <a href="/dashboard" class="module-card" style="--card-accent:#22c55e;--icon-bg:rgba(34,197,94,0.08);--icon-border:rgba(34,197,94,0.2);">
+        <div class="module-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="module-title">AI Demand Predictor</div>
+        <div class="module-desc">Real-time weather, holiday, and event-driven demand forecasting with AI-powered inventory recommendations.</div>
+        <div class="module-cta">Launch module <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+
+      <a href="/market-tracker" class="module-card" style="--card-accent:#3b82f6;--icon-bg:rgba(59,130,246,0.08);--icon-border:rgba(59,130,246,0.2);">
+        <div class="module-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="module-title">Global Market Benchmark</div>
+        <div class="module-desc">Live USDA commodity benchmarks at real-time USD/VND rates with AI competitive positioning analysis.</div>
+        <div class="module-cta">Launch module <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+
+      <a href="/distributor-map" class="module-card" style="--card-accent:#a855f7;--icon-bg:rgba(168,85,247,0.08);--icon-border:rgba(168,85,247,0.2);">
+        <div class="module-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        </div>
+        <div class="module-title">Strategic Distributor Map</div>
+        <div class="module-desc">Real OSM business intelligence with AI lead scoring. Identify and rank B2B wholesale buyers by proximity and density signals.</div>
+        <div class="module-cta">Launch module <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+
+      <a href="/route-optimizer" class="module-card" style="--card-accent:#f97316;--icon-bg:rgba(249,115,22,0.08);--icon-border:rgba(249,115,22,0.2);">
+        <div class="module-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <div class="module-title">Smart Route Optimizer</div>
+        <div class="module-desc">Real geocoding + live road-network VRP solving. Sequence deliveries to minimize distance within strict time window constraints.</div>
+        <div class="module-cta">Launch module <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-dot online"></div>
+        <span class="status-label">AI Engine</span>
+        <span class="status-val">Online</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot online"></div>
+        <span class="status-label">OSM / Overpass</span>
+        <span class="status-val">Live</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot online"></div>
+        <span class="status-label">Routing API</span>
+        <span class="status-val">ORS · Live</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot online"></div>
+        <span class="status-label">Market Data</span>
+        <span class="status-val">USDA · Live FX</span>
+      </div>
+    </div>
+  </div>
+</main>
+
 </body>
 </html>

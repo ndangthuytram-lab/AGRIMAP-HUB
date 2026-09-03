@@ -1,157 +1,323 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - AI Demand & Inventory Predictor</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #333; }
-        header { background: #1e293b; color: #fff; padding: 2rem 1rem; text-align: center; }
-        header h1 { margin: 0; font-size: 2rem; }
-        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-        
-        .card { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-        
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: #475569; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
-        
-        .btn { display: inline-block; width: 100%; background: #3b82f6; color: #fff; padding: 12px 24px; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: background 0.3s ease; text-align: center; }
-        .btn:hover { background: #2563eb; }
-        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Demand Predictor — AgriMap AI Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1c2333; --surface-3: #21262d;
+      --border: #30363d; --green: #22c55e; --green-dim: #16a34a; --green-muted: rgba(34,197,94,0.08);
+      --text: #e6edf3; --text-muted: #8b949e; --text-dim: #6e7681;
+      --yellow: #eab308; --orange: #f97316; --red: #ef4444; --blue: #3b82f6;
+      --header-h: 52px; --sidebar-w: 52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Inter','Segoe UI',system-ui,sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
-        .result-box { display: none; margin-top: 1.5rem; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 6px; background: #f8fafc; }
-        .result-box.active { display: block; }
-        .big-number { font-size: 3rem; font-weight: bold; color: #10b981; text-align: center; margin: 1rem 0; }
-        .metric-label { font-size: 0.9rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-top: 1rem; }
-        .metric-value { margin-top: 0.25rem; font-size: 1rem; color: #0f172a; }
+    /* Header */
+    .app-header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); background: rgba(13,17,23,0.97); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; z-index: 100; backdrop-filter: blur(8px); }
+    .header-brand { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-decoration: none; width: 200px; flex-shrink: 0; }
+    .header-nav { flex: 1; display: flex; align-items: center; justify-content: center; gap: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.15s, background 0.15s; white-space: nowrap; }
+    .nav-item:hover { color: var(--text); background: var(--surface-3); }
+    .nav-item.active { color: var(--green); }
+    .header-utils { display: flex; align-items: center; gap: 6px; width: 200px; justify-content: flex-end; flex-shrink: 0; }
+    .icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: color 0.15s, background 0.15s; }
+    .icon-btn:hover { color: var(--text); background: var(--surface-3); }
+    .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,var(--green-dim),#065f46); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; cursor: pointer; border: 1px solid var(--border); letter-spacing: 0.05em; }
 
-        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; }
-        }
-    </style>
+    /* Sidebar */
+    .app-sidebar { position: fixed; top: var(--header-h); left: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 90; padding: 8px 0; }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 6px; }
+    .sidebar-bottom { display: flex; flex-direction: column; gap: 2px; padding: 0 6px 8px; }
+    .sidebar-item { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-dim); text-decoration: none; transition: color 0.15s, background 0.15s; }
+    .sidebar-item:hover { color: var(--text-muted); background: var(--surface-3); }
+    .sidebar-item.active { color: var(--green); background: var(--green-muted); }
+    .sidebar-sep { height: 1px; background: var(--border); margin: 4px 6px; }
+
+    /* Page Layout */
+    .app-body { margin-top: var(--header-h); margin-left: var(--sidebar-w); min-height: calc(100vh - var(--header-h)); display: flex; flex-direction: column; }
+    .page-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 24px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .page-header-icon { width: 32px; height: 32px; border-radius: 6px; background: var(--green-muted); border: 1px solid rgba(34,197,94,0.2); display: flex; align-items: center; justify-content: center; color: var(--green); }
+    .page-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .page-subtitle { font-size: 12px; color: var(--text-muted); }
+
+    .page-content { flex: 1; display: grid; grid-template-columns: 340px 1fr; gap: 0; }
+
+    /* Form Panel */
+    .form-panel { background: var(--surface); border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; gap: 0; overflow-y: auto; }
+    .panel-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .panel-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
+    .form-input {
+      width: 100%; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 13px; font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+    }
+    .form-input::placeholder { color: var(--text-dim); }
+    .form-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.1); }
+
+    .btn-primary {
+      width: 100%; padding: 10px 16px; background: var(--green); color: #0d1117;
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: background 0.15s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;
+    }
+    .btn-primary:hover { background: #4ade80; }
+    .btn-primary:active { transform: scale(0.99); }
+    .btn-primary:disabled { background: var(--surface-3); color: var(--text-dim); cursor: not-allowed; }
+
+    .spinner {
+      display: none; width: 18px; height: 18px;
+      border: 2px solid var(--surface-3); border-top-color: var(--green);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 16px auto 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Results Panel */
+    .results-panel { background: var(--bg); padding: 24px; overflow-y: auto; }
+    .panel-section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .panel-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 12px; color: var(--text-dim); }
+    .empty-state svg { opacity: 0.3; }
+    .empty-state p { font-size: 13px; text-align: center; max-width: 240px; line-height: 1.6; }
+
+    .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+    .big-metric { text-align: center; padding: 24px 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .big-metric-label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .big-metric-value { font-size: 52px; font-weight: 700; color: var(--green); line-height: 1; }
+    .big-metric-unit { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
+    .insight-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .insight-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .insight-label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+    .insight-label-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .insight-value { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    .error-alert { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 12px 14px; color: #fca5a5; font-size: 13px; display: none; margin-bottom: 16px; }
+    .holiday-badge { display: inline-block; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--text-muted); margin: 2px 3px 2px 0; }
+
+    @media (max-width: 900px) { .page-content { grid-template-columns: 1fr; } .form-panel { border-right: none; border-bottom: 1px solid var(--border); } }
+    @media (max-width: 768px) { .header-nav { display: none; } }
+    @media (max-width: 480px) { .app-sidebar { display: none; } .app-body { margin-left: 0; } }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>AI Demand & Inventory Predictor</h1>
-    </header>
 
-    <div class="container">
-        <!-- Input Parameters Card -->
-        <div class="card">
-            <h2>Production Parameters</h2>
-            <div class="form-group">
-                <label for="product">Target Product</label>
-                <input type="text" id="product" value="Egg Cartons" placeholder="e.g., Egg Cartons">
-            </div>
-            <div class="form-group">
-                <label for="baseline">Baseline Daily Demand (Units)</label>
-                <input type="number" id="baseline" value="1000" placeholder="e.g., 1000">
-            </div>
-            <div class="form-group">
-                <label for="events">Upcoming Events / Seasonality</label>
-                <input type="text" id="events" value="Heavy rain incoming, local school farm visit cancelled." placeholder="e.g., Back-to-school season">
-            </div>
-            <button id="predictBtn" class="btn" onclick="runPrediction()">Generate Forecast</button>
-            <div id="loading" class="loader" style="margin-top: 15px;"></div>
-        </div>
+<!-- ═══ HEADER ═══ -->
+<header class="app-header">
+  <a href="/" class="header-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3C8.5 6.5 5 11 5 15.5a7 7 0 0 0 14 0C19 11 15.5 6.5 12 3z" fill="#22c55e" opacity="0.85"/><path d="M12 12.5v7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 15.5c.8-1.2 2.5-2.8 2.5-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>AGRIMAP AI HUB</span>
+  </a>
+  <nav class="header-nav">
+    <a href="/dashboard" class="nav-item active">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Demand
+    </a>
+    <a href="/market-tracker" class="nav-item">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Market
+    </a>
+    <a href="/distributor-map" class="nav-item">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Map
+    </a>
+    <a href="/route-optimizer" class="nav-item">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Logistics
+    </a>
+  </nav>
+  <div class="header-utils">
+    <button class="icon-btn" title="Notifications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+    <button class="icon-btn" title="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <div class="user-avatar">AG</div>
+  </div>
+</header>
 
-        
-        <div class="card">
-            <h2>Prediction Analytics</h2>
-            
-            <div id="errorBox" style="display: none; color: #ef4444; font-weight: bold; margin-top: 1rem;"></div>
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="app-sidebar">
+  <nav class="sidebar-nav">
+    <a href="/" class="sidebar-item" title="Home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+    <a href="/distributor-map" class="sidebar-item" title="Distributor Map"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></a>
+    <a href="/dashboard" class="sidebar-item active" title="Demand Analytics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a>
+    <a href="/market-tracker" class="sidebar-item" title="Market Tracker"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></a>
+    <a href="/route-optimizer" class="sidebar-item" title="Route Optimizer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></a>
+  </nav>
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-bottom">
+    <a href="#" class="sidebar-item" title="Help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></a>
+  </div>
+</aside>
 
-            <div id="resultBox" class="result-box">
-                <div class="metric-label" style="text-align: center;">Target Production Volume</div>
-                <div class="big-number" id="resTarget">0</div>
-                
-                <div class="metric-label">Weather Impact Assessment</div>
-                <div class="metric-value" id="resWeather">...</div>
-                
-                <div class="metric-label">Event & Seasonality Adjustment</div>
-                <div class="metric-value" id="resEvent">...</div>
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="app-body">
+  <div class="page-header">
+    <div class="page-header-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div>
+      <div class="page-title">AI Demand &amp; Inventory Predictor</div>
+      <div class="page-subtitle">Real-time weather, event, and holiday-driven production recommendations · Hanoi, Vietnam</div>
+    </div>
+  </div>
 
-                <div class="metric-label">Real Detected Holidays (Vietnam, next 14 days)</div>
-                <div class="metric-value" id="resHolidays">...</div>
+  <div class="page-content">
+    <!-- Left: Form Panel -->
+    <div class="form-panel">
+      <div class="panel-title">Production Parameters</div>
 
-                <div class="metric-label">Core Strategy Reasoning</div>
-                <div class="metric-value" id="resReasoning">...</div>
-            </div>
-            
-            <div id="emptyState" style="text-align: center; color: #94a3b8; margin-top: 3rem;">
-                Enter parameters and click "Generate Forecast" to pull live intelligence.
-            </div>
-        </div>
+      <div class="form-group">
+        <label class="form-label" for="product">Target Product</label>
+        <input class="form-input" type="text" id="product" value="Egg Cartons" placeholder="e.g., Egg Cartons">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="baseline">Baseline Daily Demand (units)</label>
+        <input class="form-input" type="number" id="baseline" value="1000" placeholder="e.g., 1000">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="events">Upcoming Events / Seasonality</label>
+        <input class="form-input" type="text" id="events" value="Heavy rain incoming, local school farm visit cancelled." placeholder="e.g., Back-to-school season">
+      </div>
+
+      <button id="predictBtn" class="btn-primary" onclick="runPrediction()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Generate AI Forecast
+      </button>
+      <div id="loading" class="spinner"></div>
     </div>
 
-    <script>
-        async function runPrediction() {
-            const btn = document.getElementById('predictBtn');
-            const loader = document.getElementById('loading');
-            const resultBox = document.getElementById('resultBox');
-            const errorBox = document.getElementById('errorBox');
-            const emptyState = document.getElementById('emptyState');
-            
-            // Gather input
-            const payload = {
-                product: document.getElementById('product').value,
-                baseline: parseInt(document.getElementById('baseline').value),
-                events: document.getElementById('events').value
-            };
+    <!-- Right: Results Panel -->
+    <div class="results-panel">
+      <div class="panel-section-title">Prediction Analytics</div>
 
-            // UI State adjustments
-            btn.disabled = true;
-            loader.style.display = 'block';
-            resultBox.classList.remove('active');
-            errorBox.style.display = 'none';
-            emptyState.style.display = 'none';
+      <div id="errorBox" class="error-alert">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:6px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="errorMsg"></span>
+      </div>
 
-            try {
-                const response = await fetch('/api/predict_demand', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+      <div id="resultBox" style="display:none;">
+        <div class="result-card">
+          <div class="big-metric">
+            <div class="big-metric-label">Target Production Volume</div>
+            <div class="big-metric-value" id="resTarget">—</div>
+            <div class="big-metric-unit">units recommended</div>
+          </div>
 
-                const data = await response.json();
+          <div class="insight-row">
+            <div class="insight-label">
+              <div class="insight-label-dot" style="background:#3b82f6"></div>
+              Weather Impact Assessment
+            </div>
+            <div class="insight-value" id="resWeather">—</div>
+          </div>
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Server processing failed.');
-                }
+          <div class="insight-row">
+            <div class="insight-label">
+              <div class="insight-label-dot" style="background:#a855f7"></div>
+              Event &amp; Seasonality Adjustment
+            </div>
+            <div class="insight-value" id="resEvent">—</div>
+          </div>
 
-                // Populate Analytics
-                document.getElementById('resTarget').innerText = data.recommended_production;
-                document.getElementById('resWeather').innerText = data.weather_impact;
-                document.getElementById('resEvent').innerText = data.event_impact;
-                document.getElementById('resReasoning').innerText = data.reasoning;
+          <div class="insight-row">
+            <div class="insight-label">
+              <div class="insight-label-dot" style="background:#eab308"></div>
+              Detected Holidays — Vietnam (next 14 days)
+            </div>
+            <div class="insight-value" id="resHolidays">—</div>
+          </div>
 
-                // null/undefined means the holiday source was unreachable — we must NOT
-                // present that as a confirmed "no holidays" result.
-                let holidaysText;
-                if (data.detected_holidays === null || data.detected_holidays === undefined) {
-                    holidaysText = 'Holiday data temporarily unavailable';
-                } else if (data.detected_holidays.length) {
-                    holidaysText = data.detected_holidays.map(h => `${h.name} (${h.date})`).join(', ');
-                } else {
-                    holidaysText = 'None in the next 14 days';
-                }
-                document.getElementById('resHolidays').innerText = holidaysText;
+          <div class="insight-row">
+            <div class="insight-label">
+              <div class="insight-label-dot" style="background:#22c55e"></div>
+              AI Strategy Reasoning
+            </div>
+            <div class="insight-value" id="resReasoning">—</div>
+          </div>
+        </div>
+      </div>
 
-                resultBox.classList.add('active');
-            } catch (err) {
-                errorBox.innerText = `System Error: ${err.message}`;
-                errorBox.style.display = 'block';
-                emptyState.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                loader.style.display = 'none';
-            }
-        }
-    </script>
+      <div id="emptyState" class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <p>Configure parameters and click <strong style="color:var(--text)">Generate AI Forecast</strong> to pull live intelligence.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function runPrediction() {
+    const btn = document.getElementById('predictBtn');
+    const loader = document.getElementById('loading');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+    const emptyState = document.getElementById('emptyState');
+
+    const payload = {
+      product: document.getElementById('product').value,
+      baseline: parseInt(document.getElementById('baseline').value),
+      events: document.getElementById('events').value
+    };
+
+    btn.disabled = true;
+    loader.style.display = 'block';
+    resultBox.style.display = 'none';
+    errorBox.style.display = 'none';
+    emptyState.style.display = 'none';
+
+    try {
+      const response = await fetch('/api/predict_demand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Server processing failed.');
+
+      document.getElementById('resTarget').innerText = data.recommended_production.toLocaleString();
+      document.getElementById('resWeather').innerText = data.weather_impact;
+      document.getElementById('resEvent').innerText = data.event_impact;
+      document.getElementById('resReasoning').innerText = data.reasoning;
+
+      let holidaysText;
+      if (data.detected_holidays === null || data.detected_holidays === undefined) {
+        holidaysText = 'Holiday data temporarily unavailable';
+      } else if (data.detected_holidays.length) {
+        const holidayEl = document.getElementById('resHolidays');
+        holidayEl.innerHTML = '';
+        data.detected_holidays.forEach(h => {
+          const badge = document.createElement('span');
+          badge.style.cssText = 'display:inline-block;background:#1c2333;border:1px solid #30363d;border-radius:4px;padding:2px 8px;font-size:11px;color:#8b949e;margin:2px 3px 2px 0;';
+          badge.textContent = `${h.name} (${h.date})`;
+          holidayEl.appendChild(badge);
+        });
+        holidaysText = null;
+      } else {
+        holidaysText = 'None in the next 14 days';
+      }
+      if (holidaysText) document.getElementById('resHolidays').innerText = holidaysText;
+
+      resultBox.style.display = 'block';
+    } catch (err) {
+      document.getElementById('errorMsg').innerText = err.message;
+      errorBox.style.display = 'flex';
+      errorBox.style.alignItems = 'center';
+      emptyState.style.display = 'flex';
+    } finally {
+      btn.disabled = false;
+      loader.style.display = 'none';
+    }
+  }
+</script>
 </body>
 </html>

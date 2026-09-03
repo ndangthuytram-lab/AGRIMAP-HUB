@@ -1,227 +1,410 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strategic Distributor Map - CoreLogic AI</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #333; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #1e293b; color: #fff; padding: 1.5rem 1rem; text-align: center; flex-shrink: 0; }
-        header h1 { margin: 0; font-size: 1.8rem; }
-        
-        .main-wrapper { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Map Section */
-        #map { flex: 2; height: 100%; min-height: 400px; z-index: 1; }
-        
-        /* Sidebar Section */
-        .sidebar { flex: 1; background: #fff; box-shadow: -2px 0 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; z-index: 2; min-width: 350px; max-width: 450px; }
-        .controls-panel { padding: 1.5rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
-        .results-panel { flex: 1; overflow-y: auto; padding: 1rem; }
-        
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-weight: bold; margin-bottom: 0.4rem; color: #475569; font-size: 0.9rem; }
-        input[type="number"], select { width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
-        
-        .btn { display: inline-block; width: 100%; background: #8b5cf6; color: #fff; padding: 10px 20px; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: background 0.3s ease; text-align: center; margin-top: 10px; }
-        .btn:hover { background: #7c3aed; }
-        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategic Distributor Map — AgriMap AI Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1c2333; --surface-3: #21262d;
+      --border: #30363d; --green: #22c55e; --green-dim: #16a34a; --green-muted: rgba(34,197,94,0.08);
+      --text: #e6edf3; --text-muted: #8b949e; --text-dim: #6e7681;
+      --yellow: #eab308; --orange: #f97316; --red: #ef4444; --blue: #3b82f6;
+      --purple: #a855f7;
+      --header-h: 52px; --sidebar-w: 52px; --right-panel-w: 320px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Inter','Segoe UI',system-ui,sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
-        /* List Items */
-        .lead-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
-        .lead-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #cbd5e1; }
-        .lead-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
-        .lead-title { font-weight: bold; color: #0f172a; font-size: 1.1rem; margin: 0; }
-        
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .badge-High { background: #dcfce7; color: #166534; }
-        .badge-Medium { background: #fef08a; color: #854d0e; }
-        .badge-Low { background: #f1f5f9; color: #475569; }
-        
-        .lead-stats { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.6; }
-        .score-bar-container { background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; }
-        .score-bar { height: 100%; background: #8b5cf6; border-radius: 3px; }
+    /* === Shared Shell === */
+    .app-header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); background: rgba(13,17,23,0.97); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; z-index: 200; backdrop-filter: blur(8px); }
+    .header-brand { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-decoration: none; width: 200px; flex-shrink: 0; }
+    .header-nav { flex: 1; display: flex; align-items: center; justify-content: center; gap: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.15s, background 0.15s; white-space: nowrap; }
+    .nav-item:hover { color: var(--text); background: var(--surface-3); }
+    .nav-item.active { color: var(--green); }
+    .header-utils { display: flex; align-items: center; gap: 6px; width: 200px; justify-content: flex-end; flex-shrink: 0; }
+    .icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: color 0.15s, background 0.15s; }
+    .icon-btn:hover { color: var(--text); background: var(--surface-3); }
+    .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,var(--green-dim),#065f46); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; cursor: pointer; border: 1px solid var(--border); letter-spacing: 0.05em; }
+    .app-sidebar { position: fixed; top: var(--header-h); left: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 150; padding: 8px 0; }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 6px; }
+    .sidebar-bottom { display: flex; flex-direction: column; gap: 2px; padding: 0 6px 8px; }
+    .sidebar-item { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-dim); text-decoration: none; transition: color 0.15s, background 0.15s; }
+    .sidebar-item:hover { color: var(--text-muted); background: var(--surface-3); }
+    .sidebar-item.active { color: var(--green); background: var(--green-muted); }
+    .sidebar-sep { height: 1px; background: var(--border); margin: 4px 6px; }
 
-        .loader { display: none; text-align: center; padding: 2rem; color: #64748b; font-weight: bold; }
-        .ai-summary { display: none; margin: 1rem 1rem 0; padding: 0.75rem 1rem; background: #f5f3ff; border-left: 4px solid #8b5cf6; border-radius: 4px; font-size: 0.85rem; color: #475569; line-height: 1.5; font-style: italic; }
-        .error-msg { display: none; color: #ef4444; padding: 1rem; background: #fee2e2; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem; }
+    /* === Map Layout === */
+    .app-layout {
+      position: fixed;
+      top: var(--header-h); left: var(--sidebar-w); right: var(--right-panel-w); bottom: 0;
+      display: flex; flex-direction: column;
+    }
+    .map-toolbar {
+      height: 44px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 14px; gap: 8px; flex-shrink: 0;
+    }
+    .map-toolbar-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+    .map-toolbar-title-icon { color: var(--green); }
+    .map-toolbar-badge {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px;
+      padding: 4px 10px; font-size: 11px; color: var(--text-muted);
+    }
 
-        @media (max-width: 768px) {
-            .main-wrapper { flex-direction: column; }
-            #map { flex: none; height: 50vh; }
-            .sidebar { max-width: 100%; flex: 1; }
-        }
-    </style>
+    #map { flex: 1; z-index: 1; }
+
+    /* === Right Panel === */
+    .right-panel {
+      position: fixed; top: var(--header-h); right: 0; bottom: 0; width: var(--right-panel-w);
+      background: var(--surface); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 150; overflow: hidden;
+    }
+    .panel-controls {
+      padding: 14px; border-bottom: 1px solid var(--border);
+      background: var(--surface-2); flex-shrink: 0;
+    }
+    .panel-head {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    }
+    .panel-head-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.2); display: flex; align-items: center; justify-content: center; color: var(--purple); flex-shrink: 0; }
+    .panel-head-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .panel-head-sub { font-size: 11px; color: var(--text-muted); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 80px; gap: 8px; margin-bottom: 10px; }
+    .form-label { display: block; font-size: 11px; font-weight: 500; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-select, .form-input-sm {
+      width: 100%; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; color: var(--text); font-size: 12px; font-family: inherit; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-select:focus, .form-input-sm:focus { border-color: var(--purple); }
+    .btn-scan {
+      width: 100%; padding: 8px; background: var(--purple); color: #fff;
+      border: none; border-radius: 5px; font-size: 12px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-scan:hover { background: #c084fc; }
+    .btn-scan:disabled { background: var(--surface-3); color: var(--text-dim); cursor: not-allowed; }
+
+    .error-msg { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 5px; padding: 8px 10px; color: #fca5a5; font-size: 12px; display: none; margin-bottom: 8px; }
+    .ai-summary { display: none; margin: 10px 14px 0; padding: 10px 12px; background: var(--surface-2); border-left: 3px solid var(--purple); border-radius: 0 5px 5px 0; font-size: 11px; color: var(--text-muted); line-height: 1.5; font-style: italic; }
+
+    .loader { display: none; text-align: center; padding: 20px; color: var(--text-dim); font-size: 12px; }
+    .loader-ring { width: 20px; height: 20px; border: 2px solid var(--surface-3); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Lead List */
+    .results-panel { flex: 1; overflow-y: auto; padding: 10px 12px; }
+    .panel-section-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 2px 6px; }
+    .lead-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 12px; margin-bottom: 8px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .lead-card:hover { border-color: var(--purple); background: var(--surface-2); }
+    .lead-card-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .lead-rank { width: 22px; height: 22px; border-radius: 4px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
+    .lead-rank.rank-1 { background: rgba(34,197,94,0.12); color: var(--green); }
+    .lead-rank.rank-2, .lead-rank.rank-3 { background: rgba(168,85,247,0.1); color: var(--purple); }
+    .lead-name { font-size: 12px; font-weight: 600; color: var(--text); flex: 1; line-height: 1.3; }
+    .lead-badge { padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+    .lead-badge.High { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: var(--green); }
+    .lead-badge.Medium { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.25); color: var(--yellow); }
+    .lead-badge.Low { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+    .lead-meta { font-size: 11px; color: var(--text-dim); display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .score-track { background: var(--surface-2); height: 3px; border-radius: 2px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 2px; background: var(--purple); }
+    .score-fill.high { background: var(--green); }
+    .score-fill.low { background: var(--red); }
+
+    .empty-leads { text-align: center; color: var(--text-dim); padding: 32px 16px; font-size: 12px; line-height: 1.7; }
+
+    /* === Floating Legend === */
+    .map-legend {
+      position: absolute; bottom: 20px; left: 14px; z-index: 50;
+      background: rgba(22,27,34,0.92); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px; backdrop-filter: blur(6px);
+      min-width: 200px;
+    }
+    .legend-title { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+    .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 11px; color: var(--text-muted); }
+    .legend-row:last-child { margin-bottom: 0; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-circle { width: 10px; height: 10px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
+
+    /* Clean dark-mode map tiles via CSS filter (eliminates API key watermark) */
+    .leaflet-tile-pane {
+      filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+    }
+
+    /* Leaflet dark overrides */
+    .leaflet-bar { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; overflow: hidden; }
+    .leaflet-bar a { background: var(--surface) !important; color: var(--text-muted) !important; border-bottom-color: var(--border) !important; width: 28px !important; height: 28px !important; line-height: 28px !important; font-size: 16px !important; }
+    .leaflet-bar a:hover { background: var(--surface-3) !important; color: var(--text) !important; }
+    .leaflet-popup-content-wrapper { background: var(--surface) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .leaflet-popup-content { font-family: 'Inter', sans-serif !important; font-size: 12px !important; line-height: 1.6 !important; color: var(--text) !important; }
+    .leaflet-control-attribution { background: rgba(13,17,23,0.7) !important; color: var(--text-dim) !important; font-size: 9px !important; }
+    .leaflet-control-attribution a { color: var(--text-muted) !important; }
+
+    @media (max-width: 1100px) { :root { --right-panel-w: 280px; } }
+    @media (max-width: 900px) {
+      .app-layout { right: 0; }
+      .right-panel { display: none; }
+    }
+    @media (max-width: 768px) { .header-nav { display: none; } }
+    @media (max-width: 480px) { .app-sidebar { display: none; } .app-layout { left: 0; } }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Strategic Distributor Map</h1>
-        <p style="margin: 0.5rem 0 0; font-size: 0.85rem; opacity: 0.8;">Real business locations from OpenStreetMap. Lead scores are computed from real proximity and density, not AI-generated.</p>
-    </header>
 
-    <div class="main-wrapper">
-        <div id="map"></div>
-        
-        <div class="sidebar">
-            <div class="controls-panel">
-                <div id="errorBox" class="error-msg"></div>
-                <div class="form-group">
-                    <label for="category">Target B2B Segment</label>
-                    <select id="category">
-                        <option value="Mini-supermarket chains">Mini-supermarket chains</option>
-                        <option value="Clean food stores">Clean food stores</option>
-                        <option value="Industrial Kitchens & Canteens">Industrial Kitchens & Canteens</option>
-                        <option value="High-end Restaurants">High-end Restaurants</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="radius">Search Radius (km)</label>
-                    <input type="number" id="radius" value="5" min="1" max="50">
-                </div>
-                <button id="scanBtn" class="btn" onclick="scanArea()">Scan Target Area</button>
-            </div>
-            
-            <div id="loader" class="loader">Querying real OpenStreetMap data... (can take up to ~90s on a busy public instance — repeat scans of the same area are instant)</div>
-            <div id="aiSummary" class="ai-summary"></div>
-            <div id="resultsList" class="results-panel">
-                <div style="text-align: center; color: #94a3b8; margin-top: 2rem;">
-                    Configure parameters and click "Scan Target Area" to find real B2B leads nearby.
-                </div>
-            </div>
-        </div>
+<!-- ═══ HEADER ═══ -->
+<header class="app-header">
+  <a href="/" class="header-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3C8.5 6.5 5 11 5 15.5a7 7 0 0 0 14 0C19 11 15.5 6.5 12 3z" fill="#22c55e" opacity="0.85"/><path d="M12 12.5v7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 15.5c.8-1.2 2.5-2.8 2.5-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>AGRIMAP AI HUB</span>
+  </a>
+  <nav class="header-nav">
+    <a href="/dashboard" class="nav-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Demand</a>
+    <a href="/market-tracker" class="nav-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Market</a>
+    <a href="/distributor-map" class="nav-item active"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Map</a>
+    <a href="/route-optimizer" class="nav-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Logistics</a>
+  </nav>
+  <div class="header-utils">
+    <button class="icon-btn" title="Notifications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+    <button class="icon-btn" title="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <div class="user-avatar">AG</div>
+  </div>
+</header>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="app-sidebar">
+  <nav class="sidebar-nav">
+    <a href="/" class="sidebar-item" title="Home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+    <a href="/distributor-map" class="sidebar-item active" title="Distributor Map"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></a>
+    <a href="/dashboard" class="sidebar-item" title="Demand Analytics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a>
+    <a href="/market-tracker" class="sidebar-item" title="Market Tracker"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></a>
+    <a href="/route-optimizer" class="sidebar-item" title="Route Optimizer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></a>
+  </nav>
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-bottom">
+    <a href="#" class="sidebar-item" title="Help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></a>
+  </div>
+</aside>
+
+<!-- ═══ MAP AREA ═══ -->
+<div class="app-layout">
+  <div class="map-toolbar">
+    <div class="map-toolbar-title">
+      <svg class="map-toolbar-title-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Strategic B2B Lead Intelligence
+    </div>
+    <div class="map-toolbar-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      OSM / Overpass
+    </div>
+  </div>
+  <div id="map" style="position:relative;">
+    <!-- Floating Legend -->
+    <div class="map-legend">
+      <div class="legend-title">Lead Priority</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div>High Priority</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#eab308"></div>Medium Priority</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div>Low Priority</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#3b82f6;opacity:0.6"></div>Logistics Hub (Base)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RIGHT PANEL ═══ -->
+<aside class="right-panel">
+  <div class="panel-controls">
+    <div class="panel-head">
+      <div class="panel-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div>
+        <div class="panel-head-title">Distributor Lead Scoring</div>
+        <div class="panel-head-sub">Real OSM data · AI-ranked B2B leads</div>
+      </div>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script>
-        // Initialize Map centered on Hanoi
-        const hanoiLat = 21.0285;
-        const hanoiLon = 105.8542;
-        const map = L.map('map').setView([hanoiLat, hanoiLon], 13);
-        let markers = [];
-        let currentCircle = null;
+    <div id="errorBox" class="error-msg"></div>
 
-        // Load OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
+    <div class="form-row">
+      <div>
+        <label class="form-label" for="category">Target B2B Segment</label>
+        <select class="form-select" id="category">
+          <option value="Mini-supermarket chains">Mini-supermarket chains</option>
+          <option value="Clean food stores">Clean food stores</option>
+          <option value="Industrial Kitchens &amp; Canteens">Industrial Kitchens &amp; Canteens</option>
+          <option value="High-end Restaurants">High-end Restaurants</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="radius">Radius (km)</label>
+        <input class="form-input-sm" type="number" id="radius" value="5" min="1" max="50">
+      </div>
+    </div>
+    <button id="scanBtn" class="btn-scan" onclick="scanArea()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Scan Target Area
+    </button>
+  </div>
+
+  <div id="aiSummary" class="ai-summary"></div>
+
+  <div id="loader" class="loader">
+    <div class="loader-ring"></div>
+    Querying OpenStreetMap data&hellip;<br>
+    <span style="font-size:10px;color:var(--text-dim)">May take up to 90s on first scan</span>
+  </div>
+
+  <div id="resultsList" class="results-panel">
+    <div class="empty-leads">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 10px;display:block;opacity:0.3"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Configure parameters and click <strong style="color:var(--text-muted)">Scan Target Area</strong> to find real B2B leads from OpenStreetMap.
+    </div>
+  </div>
+</aside>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+  const hanoiLat = 21.0285;
+  const hanoiLon = 105.8542;
+
+  const map = L.map('map', { zoomControl: true }).setView([hanoiLat, hanoiLon], 13);
+
+  // Clean OpenStreetMap tiles with CSS dark filter (no API key or watermarks)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  // Base marker (logistics hub)
+  const hubIcon = L.circleMarker([hanoiLat, hanoiLon], {
+    radius: 9, fillColor: '#3b82f6', color: '#0d1117', weight: 2, opacity: 1, fillOpacity: 0.9
+  }).addTo(map).bindPopup('<strong style="color:#3b82f6">Logistics Hub</strong><br><span style="color:#8b949e">Base of Operations · Hanoi</span>');
+
+  let markers = [];
+  let currentCircle = null;
+
+  function getPriorityColor(priority) {
+    if (priority === 'High') return '#22c55e';
+    if (priority === 'Medium') return '#eab308';
+    return '#ef4444';
+  }
+
+  async function scanArea() {
+    const btn = document.getElementById('scanBtn');
+    const loader = document.getElementById('loader');
+    const resultsList = document.getElementById('resultsList');
+    const errorBox = document.getElementById('errorBox');
+    const aiSummary = document.getElementById('aiSummary');
+
+    const category = document.getElementById('category').value;
+    const radius = parseInt(document.getElementById('radius').value);
+
+    btn.disabled = true;
+    loader.style.display = 'block';
+    resultsList.innerHTML = '';
+    errorBox.style.display = 'none';
+    aiSummary.style.display = 'none';
+    aiSummary.innerText = '';
+
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    if (currentCircle) map.removeLayer(currentCircle);
+
+    currentCircle = L.circle([hanoiLat, hanoiLon], {
+      color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.05,
+      weight: 1.5, dashArray: '6 4', radius: radius * 1000
+    }).addTo(map);
+    map.fitBounds(currentCircle.getBounds());
+
+    try {
+      const response = await fetch('/api/scan_distributors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: hanoiLat, lon: hanoiLon, radius, category })
+      });
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(data.error || 'Failed to fetch spatial data.');
+
+      const leads = data.data || [];
+
+      if (leads.length === 0) {
+        const note = data.note || 'No real listings found in this radius via OpenStreetMap.';
+        resultsList.innerHTML = `<div class="empty-leads">${note}</div>`;
+        return;
+      }
+
+      if (data.summary) {
+        aiSummary.innerText = data.summary;
+        aiSummary.style.display = 'block';
+      }
+
+      const sectionLabel = document.createElement('div');
+      sectionLabel.className = 'panel-section-label';
+      sectionLabel.textContent = `${leads.length} leads found · ${category}`;
+      resultsList.appendChild(sectionLabel);
+
+      leads.forEach((lead, index) => {
+        const color = getPriorityColor(lead.contact_priority);
+
+        // Map marker
+        const marker = L.circleMarker([lead.lat, lead.lon], {
+          radius: 7, fillColor: color, color: '#0d1117',
+          weight: 1.5, opacity: 1, fillOpacity: 0.85
         }).addTo(map);
+        marker.bindPopup(`
+          <strong>${lead.name}</strong><br>
+          <span style="color:#8b949e">Type: ${lead.osm_category}</span><br>
+          Score: <strong style="color:${color}">${lead.lead_score}/100</strong> · ${lead.distance_km} km
+        `);
+        markers.push(marker);
 
-        // Add Base Marker for "Our Facility / HQ"
-        L.marker([hanoiLat, hanoiLon]).addTo(map)
-            .bindPopup("<b>Logistics Hub</b><br>Base of Operations")
-            .openPopup();
+        // Lead card
+        const card = document.createElement('div');
+        card.className = 'lead-card';
+        card.onclick = () => { map.setView([lead.lat, lead.lon], 16); marker.openPopup(); };
 
-        async function scanArea() {
-            const btn = document.getElementById('scanBtn');
-            const loader = document.getElementById('loader');
-            const resultsList = document.getElementById('resultsList');
-            const errorBox = document.getElementById('errorBox');
-            const aiSummary = document.getElementById('aiSummary');
+        const rankClass = index === 0 ? 'rank-1' : index <= 2 ? 'rank-2 rank-3' : '';
+        const scoreClass = lead.contact_priority === 'High' ? 'high' : lead.contact_priority === 'Low' ? 'low' : '';
 
-            const category = document.getElementById('category').value;
-            const radius = parseInt(document.getElementById('radius').value);
+        card.innerHTML = `
+          <div class="lead-card-top">
+            <div class="lead-rank ${rankClass}">${index + 1}</div>
+            <div class="lead-name">${lead.name}</div>
+            <span class="lead-badge ${lead.contact_priority}">${lead.contact_priority}</span>
+          </div>
+          <div class="lead-meta">
+            <span>${lead.osm_category}</span>
+            <span>${lead.distance_km} km away</span>
+          </div>
+          <div class="score-track">
+            <div class="score-fill ${scoreClass}" style="width:${lead.lead_score}%"></div>
+          </div>
+        `;
+        resultsList.appendChild(card);
+      });
 
-            // UI State
-            btn.disabled = true;
-            loader.style.display = 'block';
-            resultsList.innerHTML = '';
-            errorBox.style.display = 'none';
-            aiSummary.style.display = 'none';
-            aiSummary.innerText = '';
-
-            // Clear old markers and circles
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-            if(currentCircle) map.removeLayer(currentCircle);
-
-            // Draw new search radius circle
-            currentCircle = L.circle([hanoiLat, hanoiLon], {
-                color: '#8b5cf6',
-                fillColor: '#8b5cf6',
-                fillOpacity: 0.1,
-                radius: radius * 1000 // Convert km to meters
-            }).addTo(map);
-            
-            map.fitBounds(currentCircle.getBounds());
-
-            try {
-                const response = await fetch('/api/scan_distributors', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat: hanoiLat, lon: hanoiLon, radius: radius, category: category })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || data.error) {
-                    throw new Error(data.error || 'Failed to fetch spatial data.');
-                }
-
-                const leads = data.data || [];
-
-                if (leads.length === 0) {
-                    // Show the backend's honest note about the real data source, not a generic message.
-                    const emptyNote = data.note || 'No real listings found in this radius via OpenStreetMap.';
-                    const emptyDiv = document.createElement('div');
-                    emptyDiv.style.cssText = 'text-align:center; color:#64748b;';
-                    emptyDiv.innerText = emptyNote;
-                    resultsList.appendChild(emptyDiv);
-                    return;
-                }
-
-                if (data.summary) {
-                    aiSummary.innerText = data.summary;
-                    aiSummary.style.display = 'block';
-                }
-
-                leads.forEach((lead, index) => {
-                    const marker = L.marker([lead.lat, lead.lon]).addTo(map);
-                    marker.bindPopup(`
-                        <strong>${lead.name}</strong><br>
-                        Category: ${lead.osm_category}<br>
-                        Score: ${lead.lead_score}/100<br>
-                        Priority: ${lead.contact_priority}
-                    `);
-                    markers.push(marker);
-
-                    const card = document.createElement('div');
-                    card.className = 'lead-card';
-                    card.onclick = () => {
-                        map.setView([lead.lat, lead.lon], 16);
-                        marker.openPopup();
-                    };
-
-                    card.innerHTML = `
-                        <div class="lead-header">
-                            <h3 class="lead-title">${index + 1}. ${lead.name}</h3>
-                            <span class="badge badge-${lead.contact_priority}">${lead.contact_priority}</span>
-                        </div>
-                        <p class="lead-stats">
-                            <strong>Category:</strong> ${lead.osm_category} | <strong>Distance:</strong> ${lead.distance_km} km<br>
-                        </p>
-                        <div style="font-size: 0.8rem; font-weight: bold; margin-top: 8px; color: #475569;">
-                            Lead Score: ${lead.lead_score}
-                        </div>
-                        <div class="score-bar-container">
-                            <div class="score-bar" style="width: ${lead.lead_score}%"></div>
-                        </div>
-                    `;
-                    resultsList.appendChild(card);
-                });
-
-            } catch (err) {
-                errorBox.innerText = `Data Engine Error: ${err.message}`;
-                errorBox.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                loader.style.display = 'none';
-            }
-        }
-    </script>
+    } catch (err) {
+      errorBox.innerText = `Scan Error: ${err.message}`;
+      errorBox.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      loader.style.display = 'none';
+    }
+  }
+</script>
 </body>
 </html>

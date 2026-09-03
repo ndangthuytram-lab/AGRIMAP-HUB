@@ -1,236 +1,421 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Route Optimizer - CoreLogic AI</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #333; }
-        header { background: #1e293b; color: #fff; padding: 2rem 1rem; text-align: center; }
-        header h1 { margin: 0; font-size: 2rem; }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
-        
-        .card { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-        
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: #475569; }
-        input[type="text"], input[type="time"] { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
-        
-        .btn { display: inline-block; width: 100%; background: #f59e0b; color: #fff; padding: 12px 24px; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: background 0.3s ease; text-align: center; font-size: 1rem; }
-        .btn:hover { background: #d97706; }
-        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Route Optimizer — AgriMap AI Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1c2333; --surface-3: #21262d;
+      --border: #30363d; --green: #22c55e; --green-dim: #16a34a; --green-muted: rgba(34,197,94,0.08);
+      --text: #e6edf3; --text-muted: #8b949e; --text-dim: #6e7681;
+      --yellow: #eab308; --orange: #f97316; --red: #ef4444; --blue: #3b82f6;
+      --header-h: 52px; --sidebar-w: 52px; --right-panel-w: 340px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Inter','Segoe UI',system-ui,sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
-        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #f59e0b; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 15px auto 0; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    /* === Shared Shell === */
+    .app-header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); background: rgba(13,17,23,0.97); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; z-index: 200; backdrop-filter: blur(8px); }
+    .header-brand { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-decoration: none; width: 200px; flex-shrink: 0; }
+    .header-nav { flex: 1; display: flex; align-items: center; justify-content: center; gap: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.15s, background 0.15s; white-space: nowrap; }
+    .nav-item:hover { color: var(--text); background: var(--surface-3); }
+    .nav-item.active { color: var(--green); }
+    .header-utils { display: flex; align-items: center; gap: 6px; width: 200px; justify-content: flex-end; flex-shrink: 0; }
+    .icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: color 0.15s, background 0.15s; }
+    .icon-btn:hover { color: var(--text); background: var(--surface-3); }
+    .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,var(--green-dim),#065f46); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; cursor: pointer; border: 1px solid var(--border); letter-spacing: 0.05em; }
+    .app-sidebar { position: fixed; top: var(--header-h); left: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 150; padding: 8px 0; }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 6px; }
+    .sidebar-bottom { display: flex; flex-direction: column; gap: 2px; padding: 0 6px 8px; }
+    .sidebar-item { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-dim); text-decoration: none; transition: color 0.15s, background 0.15s; }
+    .sidebar-item:hover { color: var(--text-muted); background: var(--surface-3); }
+    .sidebar-item.active { color: var(--green); background: var(--green-muted); }
+    .sidebar-sep { height: 1px; background: var(--border); margin: 4px 6px; }
 
-        #map { height: 500px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; z-index: 1;}
-        
-        .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-        .metric-card { background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0; text-align: center; }
-        .metric-val { font-size: 1.5rem; font-weight: bold; color: #0f172a; }
-        .metric-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: bold; }
-        
-        .sequence-list { list-style: none; padding: 0; margin: 0; }
-        .sequence-list li { background: #fff; border: 1px solid #e2e8f0; padding: 1rem; margin-bottom: 0.5rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6;}
-        .seq-num { font-weight: bold; color: #3b82f6; margin-right: 1rem; font-size: 1.2rem;}
-        .status-badge { background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        
-        @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; }
-        }
-    </style>
+    /* === Map Layout === */
+    .app-layout {
+      position: fixed;
+      top: var(--header-h); left: var(--sidebar-w); right: var(--right-panel-w); bottom: 0;
+      display: flex; flex-direction: column;
+    }
+    .map-toolbar {
+      height: 44px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 14px; gap: 8px; flex-shrink: 0;
+    }
+    .map-toolbar-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+    .map-toolbar-badge { display: flex; align-items: center; gap: 5px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 11px; color: var(--text-muted); }
+    #map { flex: 1; z-index: 1; }
+
+    /* === Right Panel === */
+    .right-panel {
+      position: fixed; top: var(--header-h); right: 0; bottom: 0; width: var(--right-panel-w);
+      background: var(--surface); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 150; overflow: hidden;
+    }
+    .panel-controls {
+      padding: 14px; border-bottom: 1px solid var(--border);
+      background: var(--surface-2); flex-shrink: 0;
+    }
+    .panel-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .panel-head-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); display: flex; align-items: center; justify-content: center; color: var(--orange); flex-shrink: 0; }
+    .panel-head-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .panel-head-sub { font-size: 11px; color: var(--text-muted); }
+
+    .form-label { display: block; font-size: 11px; font-weight: 500; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-input {
+      width: 100%; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; color: var(--text); font-size: 12px; font-family: inherit; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--orange); }
+    .form-input::placeholder { color: var(--text-dim); }
+
+    .stop-block { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 10px; margin-bottom: 8px; }
+    .stop-block-label { font-size: 10px; font-weight: 600; color: var(--orange); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: flex; align-items: center; gap: 5px; }
+    .stop-block-label-num { width: 16px; height: 16px; border-radius: 3px; background: rgba(249,115,22,0.12); display: flex; align-items: center; justify-content: center; font-size: 9px; }
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+
+    .btn-add {
+      width: 100%; padding: 7px; background: transparent; color: var(--text-muted);
+      border: 1px dashed var(--border); border-radius: 5px; font-size: 11px; font-weight: 500;
+      font-family: inherit; cursor: pointer; transition: border-color 0.15s, color 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px;
+    }
+    .btn-add:hover { border-color: var(--orange); color: var(--orange); }
+
+    .btn-primary {
+      width: 100%; padding: 9px; background: var(--orange); color: #fff;
+      border: none; border-radius: 5px; font-size: 12px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-primary:hover { background: #fb923c; }
+    .btn-primary:disabled { background: var(--surface-3); color: var(--text-dim); cursor: not-allowed; }
+
+    .spinner { display: none; width: 16px; height: 16px; border: 2px solid var(--surface-3); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 10px auto 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-alert { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 5px; padding: 8px 10px; color: #fca5a5; font-size: 12px; display: none; margin-top: 10px; }
+
+    /* Results Panel (scrollable) */
+    .panel-body { flex: 1; overflow-y: auto; padding: 14px; }
+
+    .panel-section-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 0; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+    .metrics-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .metric-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+    .metric-val { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1; }
+    .metric-lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
+
+    .strategy-text { font-size: 12px; color: var(--text-muted); line-height: 1.6; padding: 10px 12px; background: var(--bg); border-left: 3px solid var(--orange); border-radius: 0 4px 4px 0; margin-bottom: 12px; font-style: italic; }
+
+    .route-list { list-style: none; }
+    .route-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .route-item:last-child { border-bottom: none; }
+    .route-num {
+      width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; background: var(--surface-2); color: var(--text-muted);
+    }
+    .route-num.depot { background: rgba(34,197,94,0.12); color: var(--green); }
+    .route-num.stop { background: rgba(249,115,22,0.12); color: var(--orange); }
+    .route-info { flex: 1; }
+    .route-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .route-time { font-size: 11px; color: var(--text-muted); }
+    .route-badge { padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+    .route-badge.Met { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: var(--green); }
+    .route-badge.Early { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.25); color: var(--yellow); }
+    .route-badge.Risk { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: var(--red); }
+
+    .empty-state { text-align: center; color: var(--text-dim); padding: 24px 12px; font-size: 12px; line-height: 1.7; }
+
+    /* Clean dark-mode map tiles via CSS filter (eliminates API key watermark) */
+    .leaflet-tile-pane {
+      filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+    }
+
+    /* Leaflet dark overrides */
+    .leaflet-bar { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; overflow: hidden; }
+    .leaflet-bar a { background: var(--surface) !important; color: var(--text-muted) !important; border-bottom-color: var(--border) !important; width: 28px !important; height: 28px !important; line-height: 28px !important; font-size: 16px !important; }
+    .leaflet-bar a:hover { background: var(--surface-3) !important; color: var(--text) !important; }
+    .leaflet-popup-content-wrapper { background: var(--surface) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .leaflet-popup-content { font-family: 'Inter', sans-serif !important; font-size: 12px !important; line-height: 1.6 !important; color: var(--text) !important; }
+    .leaflet-control-attribution { background: rgba(13,17,23,0.7) !important; color: var(--text-dim) !important; font-size: 9px !important; }
+    .leaflet-control-attribution a { color: var(--text-muted) !important; }
+
+    @media (max-width: 1100px) { :root { --right-panel-w: 300px; } }
+    @media (max-width: 900px) { .app-layout { right: 0; } .right-panel { display: none; } }
+    @media (max-width: 768px) { .header-nav { display: none; } }
+    @media (max-width: 480px) { .app-sidebar { display: none; } .app-layout { left: 0; } }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Smart Route & Logistics Optimizer</h1>
-        <p style="margin: 0.5rem 0 0; font-size: 0.85rem; opacity: 0.8;">Real routing via OpenStreetMap (Nominatim) + OpenRouteService. You enter real delivery addresses; distances and times come from the live road network.</p>
-    </header>
 
-    <div class="container">
-        <!-- Input Controls -->
-        <div class="card">
-            <h2>Dispatch Parameters</h2>
-            <div class="form-group">
-                <label>Dispatch Time</label>
-                <input type="time" id="dispatch_time" value="05:30">
-            </div>
+<!-- ═══ HEADER ═══ -->
+<header class="app-header">
+  <a href="/" class="header-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3C8.5 6.5 5 11 5 15.5a7 7 0 0 0 14 0C19 11 15.5 6.5 12 3z" fill="#22c55e" opacity="0.85"/><path d="M12 12.5v7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 15.5c.8-1.2 2.5-2.8 2.5-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>AGRIMAP AI HUB</span>
+  </a>
+  <nav class="header-nav">
+    <a href="/dashboard" class="nav-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Demand</a>
+    <a href="/market-tracker" class="nav-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Market</a>
+    <a href="/distributor-map" class="nav-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Map</a>
+    <a href="/route-optimizer" class="nav-item active"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Logistics</a>
+  </nav>
+  <div class="header-utils">
+    <button class="icon-btn" title="Notifications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+    <button class="icon-btn" title="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <div class="user-avatar">AG</div>
+  </div>
+</header>
 
-            <div id="stopsContainer"></div>
-            <button type="button" id="addStopBtn" class="btn" style="background:#64748b; margin-bottom: 1.5rem;" onclick="addStop()">+ Add Delivery Stop</button>
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="app-sidebar">
+  <nav class="sidebar-nav">
+    <a href="/" class="sidebar-item" title="Home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+    <a href="/distributor-map" class="sidebar-item" title="Distributor Map"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></a>
+    <a href="/dashboard" class="sidebar-item" title="Demand Analytics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a>
+    <a href="/market-tracker" class="sidebar-item" title="Market Tracker"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></a>
+    <a href="/route-optimizer" class="sidebar-item active" title="Route Optimizer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></a>
+  </nav>
+  <div class="sidebar-sep"></div>
+  <div class="sidebar-bottom">
+    <a href="#" class="sidebar-item" title="Help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></a>
+  </div>
+</aside>
 
-            <button id="optimizeBtn" class="btn" onclick="calculateRoute()">Generate Smart Trajectory</button>
-            <div id="loading" class="loader"></div>
-            
-            <div id="errorBox" style="display: none; color: #ef4444; font-weight: bold; margin-top: 1rem;"></div>
-        </div>
+<!-- ═══ MAP AREA ═══ -->
+<div class="app-layout">
+  <div class="map-toolbar">
+    <div class="map-toolbar-title">
+      <svg style="color:#f97316" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Smart Route &amp; Logistics Optimizer
+    </div>
+    <div class="map-toolbar-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+      Nominatim · ORS
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
 
-        <!-- Output Visualization -->
-        <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-            <div id="map"></div>
-            
-            <div id="resultsPanel" style="padding: 1.5rem; display: none; border-top: 1px solid #e2e8f0;">
-                <div class="metrics">
-                    <div class="metric-card">
-                        <div class="metric-val" id="resDistance">0 km</div>
-                        <div class="metric-label">Estimated Transit</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-val" id="resNodes">0</div>
-                        <div class="metric-label">Stops Optimized</div>
-                    </div>
-                </div>
-                
-                <p id="resStrategy" style="font-size: 0.95rem; color: #475569; margin-bottom: 1.5rem;"></p>
-                
-                <ul class="sequence-list" id="routeSequence">
-                    <!-- Javascript will populate this -->
-                </ul>
-            </div>
-        </div>
+<!-- ═══ RIGHT PANEL ═══ -->
+<aside class="right-panel">
+  <div class="panel-controls">
+    <div class="panel-head">
+      <div class="panel-head-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <div>
+        <div class="panel-head-title">Dispatch Parameters</div>
+        <div class="panel-head-sub">Real addresses · Live road-network VRP</div>
+      </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        // Initialize Map
-        const map = L.map('map').setView([21.0285, 105.8542], 12);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-        }).addTo(map);
-        
-        let routeLayer = L.featureGroup().addTo(map);
+    <div style="margin-bottom:10px;">
+      <label class="form-label" for="dispatch_time">Dispatch Time</label>
+      <input class="form-input" type="time" id="dispatch_time" value="05:30">
+    </div>
 
-        let stopCount = 0;
+    <div id="stopsContainer"></div>
 
-        function addStop() {
-            if (stopCount >= 8) { alert('Maximum 8 delivery stops.'); return; }
-            stopCount++;
-            const div = document.createElement('div');
-            div.className = 'form-group stop-row';
-            div.dataset.stopId = stopCount;
-            div.innerHTML = `
-                <label>Stop ${stopCount} - Real Address</label>
-                <input type="text" class="stop-address" placeholder="e.g., BigC Thang Long, Hanoi">
-                <label style="margin-top:0.5rem;">Time Window</label>
-                <div style="display:flex; gap:0.5rem;">
-                    <input type="time" class="stop-start" value="06:00">
-                    <input type="time" class="stop-end" value="08:00">
-                </div>
-            `;
-            document.getElementById('stopsContainer').appendChild(div);
-        }
-        addStop();
-        addStop();
+    <button type="button" id="addStopBtn" class="btn-add" onclick="addStop()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Delivery Stop
+    </button>
 
-        async function calculateRoute() {
-            const btn = document.getElementById('optimizeBtn');
-            const loader = document.getElementById('loading');
-            const resultsPanel = document.getElementById('resultsPanel');
-            const errorBox = document.getElementById('errorBox');
+    <button id="optimizeBtn" class="btn-primary" onclick="calculateRoute()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Generate Smart Trajectory
+    </button>
+    <div id="loading" class="spinner"></div>
+    <div id="errorBox" class="error-alert"></div>
+  </div>
 
-            btn.disabled = true;
-            loader.style.display = 'block';
-            resultsPanel.style.display = 'none';
-            errorBox.style.display = 'none';
-            routeLayer.clearLayers();
+  <!-- Results scrollable body -->
+  <div class="panel-body">
+    <div id="resultsPanel" style="display:none;">
+      <div class="panel-section-label">Route Intelligence</div>
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-val" id="resDistance">—</div>
+          <div class="metric-lbl">Est. Distance</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="resNodes">—</div>
+          <div class="metric-lbl">Stops Optimized</div>
+        </div>
+      </div>
+      <p id="resStrategy" class="strategy-text" style="display:none;"></p>
+      <ul class="route-list" id="routeSequence"></ul>
+    </div>
 
-            const stopRows = document.querySelectorAll('.stop-row');
-            const deliveries = Array.from(stopRows).map((row, i) => ({
-                name: `Stop ${i + 1}`,
-                address: row.querySelector('.stop-address').value,
-                time_window: `${row.querySelector('.stop-start').value}-${row.querySelector('.stop-end').value}`
-            })).filter(d => d.address.trim() !== '');
+    <div id="emptyState" class="empty-state">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 10px;display:block;opacity:0.25"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Add delivery stops and click <strong style="color:var(--text-muted)">Generate Smart Trajectory</strong> to compute the optimal route via real road-network data.
+    </div>
+  </div>
+</aside>
 
-            if (deliveries.length === 0) {
-                errorBox.innerText = 'Enter at least one real delivery address.';
-                errorBox.style.display = 'block';
-                btn.disabled = false;
-                loader.style.display = 'none';
-                return;
-            }
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // Initialize Map
+  const map = L.map('map').setView([21.0285, 105.8542], 12);
+  // Clean OpenStreetMap tiles with CSS dark filter (no API key or watermarks)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
 
-            const payload = {
-                dispatch_time: document.getElementById('dispatch_time').value,
-                depot: { name: "Central Warehouse", lat: 21.0285, lon: 105.8542 },
-                deliveries: deliveries
-            };
+  let routeLayer = L.featureGroup().addTo(map);
+  let stopCount = 0;
 
-            try {
-                const response = await fetch('/api/optimize_route', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+  function addStop() {
+    if (stopCount >= 8) { alert('Maximum 8 delivery stops.'); return; }
+    stopCount++;
+    const div = document.createElement('div');
+    div.className = 'stop-block stop-row';
+    div.dataset.stopId = stopCount;
+    div.innerHTML = `
+      <div class="stop-block-label">
+        <div class="stop-block-label-num">${stopCount}</div>
+        Stop ${stopCount}
+      </div>
+      <label class="form-label" style="margin-bottom:4px;">Delivery Address</label>
+      <input type="text" class="form-input stop-address" placeholder="e.g., BigC Thang Long, Hanoi" style="margin-bottom:6px;">
+      <label class="form-label">Time Window</label>
+      <div class="time-row">
+        <input type="time" class="form-input stop-start" value="06:00">
+        <input type="time" class="form-input stop-end" value="08:00">
+      </div>
+    `;
+    document.getElementById('stopsContainer').appendChild(div);
+  }
+  addStop();
+  addStop();
 
-                const json = await response.json();
+  async function calculateRoute() {
+    const btn = document.getElementById('optimizeBtn');
+    const loader = document.getElementById('loading');
+    const resultsPanel = document.getElementById('resultsPanel');
+    const errorBox = document.getElementById('errorBox');
+    const emptyState = document.getElementById('emptyState');
 
-                if (!response.ok) {
-                    throw new Error(json.error || 'Optimization calculation failed.');
-                }
+    btn.disabled = true;
+    loader.style.display = 'block';
+    resultsPanel.style.display = 'none';
+    errorBox.style.display = 'none';
+    emptyState.style.display = 'none';
+    routeLayer.clearLayers();
 
-                const data = json.data;
-                const route = data.optimized_route;
+    const stopRows = document.querySelectorAll('.stop-row');
+    const deliveries = Array.from(stopRows).map((row, i) => ({
+      name: `Stop ${i + 1}`,
+      address: row.querySelector('.stop-address').value,
+      time_window: `${row.querySelector('.stop-start').value}-${row.querySelector('.stop-end').value}`
+    })).filter(d => d.address.trim() !== '');
 
-                // Update UI Metrics
-                document.getElementById('resDistance').innerText = `${data.total_estimated_km} km`;
-                document.getElementById('resNodes').innerText = route.length;
-                document.getElementById('resStrategy').innerText = data.strategy_summary;
+    if (deliveries.length === 0) {
+      errorBox.innerText = 'Enter at least one real delivery address.';
+      errorBox.style.display = 'block';
+      emptyState.style.display = 'block';
+      btn.disabled = false;
+      loader.style.display = 'none';
+      return;
+    }
 
-                // Build Sequence List and Map Markers
-                const seqList = document.getElementById('routeSequence');
-                seqList.innerHTML = '';
-                
-                let latlngs = [];
+    const payload = {
+      dispatch_time: document.getElementById('dispatch_time').value,
+      depot: { name: 'Central Warehouse', lat: 21.0285, lon: 105.8542 },
+      deliveries
+    };
 
-                route.forEach(node => {
-                    // List Item
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <div>
-                            <span class="seq-num">#${node.step}</span>
-                            <strong>${node.name}</strong> <br>
-                            <small style="color:#64748b; margin-left:2.5rem;">Est. Arrival: ${node.arrival_time}</small>
-                        </div>
-                        <span class="status-badge">${node.time_window_status}</span>
-                    `;
-                    seqList.appendChild(li);
+    try {
+      const response = await fetch('/api/optimize_route', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || 'Optimization failed.');
 
-                    // Map Marker
-                    const latlng = [node.lat, node.lon];
-                    latlngs.push(latlng);
-                    
-                    const isDepot = node.name.includes("Warehouse") || node.name.includes("Depot");
-                    const markerColor = isDepot ? 'red' : 'blue';
-                    
-                    const marker = L.circleMarker(latlng, {
-                        radius: 8,
-                        fillColor: markerColor,
-                        color: "#fff",
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    });
-                    marker.bindPopup(`<b>${node.step}. ${node.name}</b><br>Arrival: ${node.arrival_time}`);
-                    routeLayer.addLayer(marker);
-                });
+      const data = json.data;
+      const route = data.optimized_route;
 
-                // Draw Path line
-                if (latlngs.length > 1) {
-                    const polyline = L.polyline(latlngs, {color: '#3b82f6', weight: 4, dashArray: '10, 10'}).addTo(routeLayer);
-                    map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
-                }
+      document.getElementById('resDistance').innerText = `${data.total_estimated_km} km`;
+      document.getElementById('resNodes').innerText = route.length;
 
-                resultsPanel.style.display = 'block';
+      const stratEl = document.getElementById('resStrategy');
+      if (data.strategy_summary) {
+        stratEl.innerText = data.strategy_summary;
+        stratEl.style.display = 'block';
+      }
 
-            } catch (err) {
-                errorBox.innerText = `System Error: ${err.message}`;
-                errorBox.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                loader.style.display = 'none';
-            }
-        }
-    </script>
+      const seqList = document.getElementById('routeSequence');
+      seqList.innerHTML = '';
+      let latlngs = [];
+
+      route.forEach((node, idx) => {
+        const isDepot = node.name.toLowerCase().includes('warehouse') || node.name.toLowerCase().includes('depot');
+        const color = isDepot ? '#22c55e' : '#f97316';
+
+        // Map marker
+        const marker = L.circleMarker([node.lat, node.lon], {
+          radius: isDepot ? 9 : 7, fillColor: color,
+          color: '#0d1117', weight: 2, opacity: 1, fillOpacity: 0.9
+        });
+        marker.bindPopup(`<strong>${node.step}. ${node.name}</strong><br><span style="color:#8b949e">Arrival: ${node.arrival_time}</span>`);
+        routeLayer.addLayer(marker);
+        latlngs.push([node.lat, node.lon]);
+
+        // Route item
+        const li = document.createElement('li');
+        li.className = 'route-item';
+
+        const statusKey = node.time_window_status.replace(' ', '');
+        const badgeClass = statusKey.includes('Risk') ? 'Risk' : node.time_window_status;
+
+        li.innerHTML = `
+          <div class="route-num ${isDepot ? 'depot' : 'stop'}">${node.step}</div>
+          <div class="route-info">
+            <div class="route-name">${node.name}</div>
+            <div class="route-time">Est. Arrival: ${node.arrival_time}</div>
+          </div>
+          <span class="route-badge ${badgeClass}">${node.time_window_status}</span>
+        `;
+        seqList.appendChild(li);
+      });
+
+      // Draw route polyline
+      if (latlngs.length > 1) {
+        const polyline = L.polyline(latlngs, { color: '#22c55e', weight: 3, opacity: 0.8, dashArray: '8 5' });
+        routeLayer.addLayer(polyline);
+        map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+      }
+
+      resultsPanel.style.display = 'block';
+    } catch (err) {
+      errorBox.innerText = `Error: ${err.message}`;
+      errorBox.style.display = 'block';
+      emptyState.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      loader.style.display = 'none';
+    }
+  }
+</script>
 </body>
 </html>
